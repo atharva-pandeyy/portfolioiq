@@ -46,7 +46,7 @@ A publicly hosted financial analytics tool for Indian equity and mutual fund inv
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/YOUR_USERNAME/portfolioiq.git
+git clone https://github.com/atharva-pandeyy/portfolioiq.git
 cd portfolioiq
 
 # 2. Install dependencies
