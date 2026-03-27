@@ -81,62 +81,48 @@ for k, v in {
 }.items():
     if k not in st.session_state: st.session_state[k] = v
 
+
 # stock name lookup - common NSE stocks
-MASTER_TICKERS = {
-    "RELIANCE": ["reliance industries", "reliance", "ril"],
-    "TCS": ["tcs", "tata consultancy services", "tata consultancy"],
-    "HDFCBANK": ["hdfc bank", "hdfc"],
-    "INFY": ["infosys"],
-    "ICICIBANK": ["icici bank", "icici"],
-    "SBIN": ["state bank of india", "sbi"],
-    "KOTAKBANK": ["kotak mahindra bank", "kotak"],
-    "LT": ["larsen & toubro", "larsen and toubro", "l&t"],
-    "ITC": ["itc"],
-    "HINDUNILVR": ["hindustan unilever", "hul"],
-    "BAJFINANCE": ["bajaj finance"],
-    "MARUTI": ["maruti suzuki"],
-    "TATASTEEL": ["tata steel"],
-    "ADANIPORTS": ["adani ports"],
-    "ADANIENT": ["adani enterprises"],
-    "ADANIGREEN": ["adani green"],
-    "ATGL": ["adani total gas"],
-    "DMART": ["dmart", "avenue supermarts"],
-    "ETERNAL": ["zomato", "eternal"],
-    "PAYTM": ["paytm", "one97"],
-    "NYKAA": ["nykaa"],
-    "INDIGO": ["indigo", "interglobe aviation"],
-    "BEL": ["bharat electronics"],
-    "HAL": ["hindustan aeronautics"],
-    "TATAPOWER": ["tata power"],
-    "VBL": ["varun beverages"],
-    "DLF": ["dlf"]
+TICKERS = {
+    "Reliance Industries":"RELIANCE","Tata Consultancy Services":"TCS",
+    "HDFC Bank":"HDFCBANK","Infosys":"INFY","ICICI Bank":"ICICIBANK",
+    "Wipro":"WIPRO","State Bank of India":"SBIN","Kotak Mahindra Bank":"KOTAKBANK",
+    "Bajaj Finance":"BAJFINANCE","Maruti Suzuki":"MARUTI","Asian Paints":"ASIANPAINT",
+    "Larsen & Toubro":"LT","Axis Bank":"AXISBANK","HCL Technologies":"HCLTECH",
+    "Titan":"TITAN","Ultratech Cement":"ULTRACEMCO","Sun Pharma":"SUNPHARMA",
+    "Tata Motors":"TATAMOTORS","Adani Ports":"ADANIPORTS","Power Grid":"POWERGRID",
+    "NTPC":"NTPC","Tata Steel":"TATASTEEL","ITC":"ITC","Nestle India":"NESTLEIND",
+    "Hindustan Unilever":"HINDUNILVR","Divi's Labs":"DIVISLAB","Dr Reddy's":"DRREDDY",
+    "Cipla":"CIPLA","Hero MotoCorp":"HEROMOTOCO","Bajaj Auto":"BAJAJ-AUTO",
+    "Eicher Motors":"EICHERMOT","Britannia":"BRITANNIA","Pidilite":"PIDILITIND",
+    "Havells":"HAVELLS","Voltas":"VOLTAS","Trent":"TRENT","Grasim":"GRASIM",
+    "Tech Mahindra":"TECHM","ONGC":"ONGC","Indian Oil":"IOC","BPCL":"BPCL",
+    "JSW Steel":"JSWSTEEL","Hindalco":"HINDALCO","Vedanta":"VEDL","Coal India":"COALINDIA",
+    "Zomato":"ZOMATO","Nykaa":"NYKAA","Paytm":"PAYTM","Mphasis":"MPHASIS",
+    "Polycab":"POLYCAB","KEI Industries":"KEI","Astral":"ASTRAL","Dixon Tech":"DIXON",
+    "Chambal Fertilisers":"CHAMBLFERT","Coromandel":"COROMANDEL","PI Industries":"PIIND",
+    "Deepak Nitrite":"DEEPAKNTR","SRF":"SRF","Persistent Systems":"PERSISTENT",
+    "Coforge":"COFORGE","LTIMindtree":"LTIM","Tata Elxsi":"TATAELXSI",
+    "Info Edge (Naukri)":"NAUKRI","Zydus Lifesciences":"ZYDUSLIFE",
+    "Torrent Pharma":"TORNTPHARM","Lupin":"LUPIN","Alkem Labs":"ALKEM",
+    "Sona BLW / Sona Comstar":"SONACOMS","Bharat Forge":"BHARATFORG",
+    "Motherson Sumi":"MOTHERSON","Schaeffler India":"SCHAEFFLER",
+    "Cummins India":"CUMMINSIND","ABB India":"ABB","Siemens India":"SIEMENS",
+    "IREDA":"IREDA","NHPC":"NHPC","SJVN":"SJVN","Torrent Power":"TORNTPOWER",
+    "Adani Green":"ADANIGREEN","Adani Enterprises":"ADANIENT",
+    "Godrej Consumer":"GODREJCP","Marico":"MARICO","Colgate":"COLPAL",
+    "Dabur":"DABUR","Page Industries":"PAGEIND","DMart":"DMART",
+    "Tata Consumer":"TATACONSUM","Indian Hotels (Taj)":"INDHOTEL",
+    "Mahindra & Mahindra":"M&M","Muthoot Finance":"MUTHOOTFIN",
+    "Cholamandalam Finance":"CHOLAFIN","HDFC Life":"HDFCLIFE",
+    "SBI Life":"SBILIFE","ICICI Lombard":"ICICIGI","Star Health":"STARHEALTH",
+    "Angel One":"ANGELONE","BSE Ltd":"BSE","MCX":"MCX","CDSL":"CDSL","CAMS":"CAMS",
 }
 
-def generate_ticker_map(master):
-    ticker_map = {}
-    for ticker, names in master.items():
-        for name in names:
-            base = name.lower().strip()
-            variants = {
-                base,
-                base.replace(" ", ""),
-                base.replace("&", "and"),
-                base.replace("and", "&"),
-                base.replace("-", ""),
-            }
-            for v in variants:
-                ticker_map[v] = ticker
-    return ticker_map
-
-TICKERS = generate_ticker_map(MASTER_TICKERS)
-
 def find_ticker(q):
-    q = q.lower().strip()
-    results = []
-    for k, v in TICKERS.items():
-        if q in k:
-            results.append((k.upper(), v))
-    return list(dict.fromkeys(results))[:8]
+    q = q.lower()
+    return [(f"{n}  ({t})", t) for n, t in TICKERS.items()
+            if q in n.lower() or q in t.lower()][:8]
 
 
 # align two series to common dates (handles MF NAV vs index date mismatch)
@@ -235,76 +221,10 @@ def bt_chart(res):
     return fig
 
 
-def ai_insights(m, bench_m, info, name, period):
-    """
-    Generates plain-English interpretation of the metrics.
-    Uses Claude API so it reads like an analyst wrote it, not a template.
-    Falls back to rule-based text if API is unavailable.
-    """
-    import requests as req
-
-    cagr_pct  = round((m["cagr"] or 0) * 100, 1)
-    nifty_cagr = round((bench_m["cagr"] or 0) * 100, 1) if bench_m else None
-    sharpe    = m["sharpe"] or 0
-    dd        = round((m["max_drawdown"] or 0) * 100, 1)
-    vol       = round((m["volatility"] or 0) * 100, 1)
-    tr        = round((m["total_return"] or 0) * 100, 1)
-
-    prompt = f"""You are a concise financial analyst. Given these metrics for {name} over {period} years:
-- Total Return: {tr}%
-- CAGR: {cagr_pct}% (Nifty 50: {nifty_cagr}%)
-- Sharpe Ratio: {sharpe}
-- Max Drawdown: {dd}%
-- Annualised Volatility: {vol}%
-- Sector: {info.get('sector','N/A')}
-
-Write 3-4 short bullet points interpreting these numbers for a retail investor.
-Be direct and specific. Start each bullet with a verdict word like "Underperformed", "Strong", "Risky", "Solid", etc.
-Keep each bullet under 20 words. No markdown headers, no intro sentence."""
-
-    try:
-        resp = req.post(
-            "https://api.anthropic.com/v1/messages",
-            headers={"Content-Type": "application/json"},
-            json={"model": "claude-sonnet-4-20250514", "max_tokens": 300,
-                  "messages": [{"role": "user", "content": prompt}]},
-            timeout=15
-        )
-        text = resp.json()["content"][0]["text"].strip()
-        return text
-    except:
-        # rule-based fallback if API fails
-        lines = []
-        if nifty_cagr is not None:
-            diff = cagr_pct - nifty_cagr
-            lines.append(f"{'Outperformed' if diff > 0 else 'Underperformed'} Nifty 50 by {abs(diff):.1f}% CAGR over {period} years.")
-        if sharpe > 1:    lines.append(f"Strong risk-adjusted returns — Sharpe of {sharpe:.2f} is above the 1.0 threshold.")
-        elif sharpe > 0:  lines.append(f"Modest risk-adjusted returns — Sharpe of {sharpe:.2f}. Could do better per unit of risk.")
-        else:             lines.append(f"Poor risk-adjusted returns — Sharpe of {sharpe:.2f}. A fixed deposit may have been safer.")
-        if abs(dd) > 30:  lines.append(f"High drawdown risk — fell {abs(dd):.1f}% from peak at worst. Not for weak stomachs.")
-        elif abs(dd) > 15:lines.append(f"Moderate drawdown of {abs(dd):.1f}%. Manageable if you held through the dip.")
-        else:             lines.append(f"Relatively stable — max drawdown was only {abs(dd):.1f}%.")
-        return "\n".join(f"• {l}" for l in lines)
-
-
 # ── sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("### 📊 PortfolioIQ")
-    st.caption("Analyse Indian stocks & mutual funds like a pro.")
-    st.markdown("""
-<div style="display:flex;gap:8px;margin-top:6px">
-  <a href="https://github.com/atharva-pandeyy/portfolioiq" target="_blank"
-     style="font-size:11px;color:#7C6AFF;text-decoration:none;background:rgba(124,106,255,.12);
-            border:1px solid rgba(124,106,255,.3);padding:3px 10px;border-radius:20px">
-    GitHub ↗
-  </a>
-  <a href="https://linkedin.com/in/atharva-pandey-600826322" target="_blank"
-     style="font-size:11px;color:#3ECF8E;text-decoration:none;background:rgba(62,207,142,.10);
-            border:1px solid rgba(62,207,142,.3);padding:3px 10px;border-radius:20px">
-    LinkedIn ↗
-  </a>
-</div>""", unsafe_allow_html=True)
-    st.caption("Built by Atharva Pandey")
+    st.caption("Indian Markets Analytics · Built by Atharva Pandey")
     st.divider()
     mode_label = st.radio("Experience Mode", ["🟢 Beginner", "🔵 Pro"], index=0)
     pro = mode_label == "🔵 Pro"
@@ -328,149 +248,57 @@ if section == "Stock Analysis":
     st.markdown(f'# Stock Analysis &nbsp;<span class="badge {badge_cls}">{badge_txt} Mode</span>',
                 unsafe_allow_html=True)
 
-    # landing hook — only shows before any stock is loaded
-    st.markdown("""
-<div style="background:rgba(124,106,255,0.07);border:1px solid rgba(124,106,255,0.2);
-        border-radius:10px;padding:16px 20px;margin-bottom:20px">
-<div style="font-size:14px;font-weight:600;color:#e8e8f0;margin-bottom:6px">
-What can you do here?
-</div>
-<div style="font-size:13px;color:#9ca3af;line-height:1.7">
-📈 &nbsp;Compare any NSE stock against Nifty 50 — see if it actually beat the market<br>
-📊 &nbsp;Get risk metrics: CAGR, Sharpe Ratio, Max Drawdown explained in plain English<br>
-🔁 &nbsp;Backtest a moving average strategy on any stock with your own capital amount<br>
-💼 &nbsp;Upload your portfolio CSV and track live P&L across all your holdings
-</div>
-</div>""", unsafe_allow_html=True)
+    q = st.text_input("Search by company name or NSE ticker",
+                      placeholder="e.g. HDFC Bank, ONGC, Sona BLW, ZOMATO …", key="s_q")
+    sel_ticker = st.session_state.get("pending", "") or ""
 
-    # quick-pick buttons that auto-load
-    st.caption("Quick load:")
-    qc = st.columns(5)
-    for i, (name, tkr) in enumerate([
-        ("HDFC Bank","HDFCBANK"),("Reliance","RELIANCE"),
-        ("TCS","TCS"),("ITC","ITC"),("ONGC","ONGC")
-    ]):
-        with qc[i]:
-            if st.button(name, key=f"quick_{i}", use_container_width=True):
-                st.session_state["pending"] = tkr
-                st.rerun()
-
-    q = st.text_input(
-    "Search by company name or NSE ticker",
-    placeholder="e.g. HDFC Bank, ONGC, Sona BLW, ZOMATO …",
-    key="s_q"
-)
-
-# ===== SMART TICKER RESOLUTION =====
-def smart_resolve_ticker(q):
-    q = q.strip().upper()
-
-    # 1. Direct try
-    df = get_stock(q, 1)
-    if df is not None and not df.empty:
-        return q
-
-    # 2. Try NSE format
-    df = get_stock(q + ".NS", 1)
-    if df is not None and not df.empty:
-        return q
-
-    # 3. Yahoo suggestions
-    sugg = suggest_tickers(q)
-    if sugg:
-        return sugg[0]["ticker"].replace(".NS", "").replace(".BO", "")
-
-    return None
-
-
-# ===== PRIORITY ENGINE (FIXED) =====
-sel_ticker = None
-
-# 1. Button click priority
-if st.session_state.get("pending"):
-    sel_ticker = st.session_state["pending"]
-
-# 2. Search input
-elif q:
-    hits = find_ticker(q)
-
-    if hits:
-        lbls, tkrs = zip(*hits)
-        ch = st.selectbox("Select company", list(lbls), key="s_sel")
-        sel_ticker = tkrs[list(lbls).index(ch)]
-        st.caption(f"Ticker: **{sel_ticker}**")
-    else:
-        resolved = smart_resolve_ticker(q)
-        if resolved:
-            sel_ticker = resolved
-            st.caption(f"Auto-resolved to: **{sel_ticker}**")
+    if q:
+        hits = find_ticker(q)
+        if hits:
+            lbls, tkrs = zip(*hits)
+            ch = st.selectbox("Select company", list(lbls), key="s_sel")
+            sel_ticker = tkrs[list(lbls).index(ch)]
+            st.caption(f"Ticker: **{sel_ticker}**")
         else:
             sel_ticker = q.strip().upper()
             st.caption(f"Searching directly for: **{sel_ticker}**")
 
+    nifty_on = st.checkbox("Compare vs Nifty 50", value=True, key="s_nifty")
 
-nifty_on = st.checkbox("Compare vs Nifty 50", value=True, key="s_nifty")
+    period_changed = (st.session_state.s_df is not None and
+                      st.session_state.s_period != period)
+    auto = bool(st.session_state.get("pending"))
 
-period_changed = (
-    st.session_state.s_df is not None
-    and st.session_state.s_period != period
-)
+    if (st.button("Analyse →", type="primary", use_container_width=True, key="s_btn")
+            and sel_ticker) or auto or period_changed:
 
-auto = bool(st.session_state.get("pending"))
+        t = st.session_state.pop("pending", None) or sel_ticker or st.session_state.s_ticker
+        if t:
+            with st.spinner(f"Fetching {t}…"):
+                df = get_stock(t, period)
+                bench = get_nifty(period) if nifty_on else None
+                info  = get_stock_info(t)
 
-# 🔥 FORCE pending usage
-if st.session_state.get("pending"):
-    sel_ticker = st.session_state["pending"]
-
-
-if (st.button("Analyse →", type="primary", use_container_width=True, key="s_btn")
-        and sel_ticker) or auto or period_changed:
-
-    # ❌ NO pop() anymore
-    t = st.session_state.get("pending") or sel_ticker or st.session_state.s_ticker
-
-    if t:
-        with st.spinner(f"Fetching {t}…"):
-            df = get_stock(t, period)
-            bench = get_nifty(period) if nifty_on else None
-            info  = get_stock_info(t)
-
-        if df is None or df.empty:
-            st.error(f"Couldn't find data for **{t}**. Check for spelling errors or the exact NSE ticker.")
-
-            with st.spinner("Looking for similar companies…"):
-                sugg = suggest_tickers(t)
-
-            if sugg:
-                st.warning("Did you mean one of these?")
-                cols = st.columns(min(len(sugg), 3))
-
-                for i, s in enumerate(sugg):
-                    with cols[i % 3]:
-                        if st.button(
-                            f"{s['name']}  ·  {s['ticker']}  ({s['exchange']})",
-                            key=f"sg_{i}"
-                        ):
-                            st.session_state["pending"] = (
-                                s["ticker"]
-                                .replace(".NS", "")
-                                .replace(".BO", "")
-                            )
-                            st.rerun()
+            if df is None or df.empty:
+                st.error(f"No data for **{t}**.")
+                with st.spinner("Looking for similar companies…"):
+                    sugg = suggest_tickers(t)
+                if sugg:
+                    st.warning("Did you mean one of these?")
+                    cols = st.columns(min(len(sugg), 3))
+                    for i, s in enumerate(sugg):
+                        with cols[i % 3]:
+                            if st.button(f"{s['name']}  ·  {s['ticker']}  ({s['exchange']})",
+                                         key=f"sg_{i}"):
+                                st.session_state["pending"] = s["ticker"].replace(".NS","").replace(".BO","")
+                                st.rerun()
+                else:
+                    st.info("Try a shorter name or the exact NSE ticker.")
             else:
-                st.info("No matches found. Try a simpler name.")
-
-        else:
-            # ✅ SUCCESS → NOW CLEAR pending
-            st.session_state.update({
-                "s_df": df,
-                "s_bench": bench,
-                "s_bname": "Nifty 50",
-                "s_info": info,
-                "s_ticker": t,
-                "s_period": period,
-                "pending": None
-            })
+                st.session_state.update({
+                    "s_df": df, "s_bench": bench, "s_bname": "Nifty 50",
+                    "s_info": info, "s_ticker": t, "s_period": period, "pending": None
+                })
 
     # render
     if st.session_state.s_df is not None:
@@ -509,19 +337,6 @@ if (st.button("Analyse →", type="primary", use_container_width=True, key="s_bt
 
 **Chart** — Purple above grey = beat the market. Both start at 100 for fair comparison.
                 """)
-
-            # AI insights — works in both modes
-            bench_m = get_all(bench) if bench is not None and not bench.empty else None
-            with st.expander("🧠 AI Analyst Insights — what do these numbers actually mean?", expanded=True):
-                with st.spinner("Generating insights…"):
-                    insight_text = ai_insights(m, bench_m, info, info.get("name","this stock"), period)
-                st.markdown(f"""
-<div style="background:rgba(124,106,255,0.06);border:1px solid rgba(124,106,255,0.18);
-            border-radius:8px;padding:14px 18px;font-size:13px;line-height:1.8;color:#c8c8d8">
-{insight_text.replace(chr(10), '<br>')}
-</div>""", unsafe_allow_html=True)
-                st.caption("Powered by Claude · For educational purposes only, not investment advice.")
-
         else:
             cols = st.columns(5)
             data = [
@@ -588,18 +403,6 @@ if (st.button("Analyse →", type="primary", use_container_width=True, key="s_bt
                             td[col] = td[col].dt.strftime("%d %b %Y")
                         td["return_pct"] = td["return_pct"].apply(lambda x: f"{x:+.2f}%")
                         st.dataframe(td, use_container_width=True, hide_index=True)
-
-            st.divider()
-            bench_m = get_all(bench) if bench is not None and not bench.empty else None
-            with st.expander("🧠 AI Analyst Insights", expanded=False):
-                with st.spinner("Generating…"):
-                    insight_text = ai_insights(m, bench_m, info, info.get("name","this stock"), period)
-                st.markdown(f"""
-<div style="background:rgba(124,106,255,0.06);border:1px solid rgba(124,106,255,0.18);
-            border-radius:8px;padding:14px 18px;font-size:13px;line-height:1.8;color:#c8c8d8">
-{insight_text.replace(chr(10), '<br>')}
-</div>""", unsafe_allow_html=True)
-                st.caption("Powered by Claude · Not investment advice.")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -795,44 +598,3 @@ SONACOMS,20,520.00
                            color="#6b6b80", tickprefix="₹"),
                 margin=dict(l=0,r=0,t=20,b=0))
             st.plotly_chart(fig, use_container_width=True)
-
-            # portfolio vs nifty — compare total portfolio value growth vs benchmark
-            st.markdown('<div class="sh">Portfolio vs Nifty 50</div>', unsafe_allow_html=True)
-            st.caption("How your overall portfolio performed vs just putting it all in a Nifty 50 index fund.")
-            try:
-                bench_pf = get_nifty(3)
-                if bench_pf is not None and not bench_pf.empty:
-                    # weighted average of individual stock returns as proxy
-                    weights = pf_df["Invested"] / pf_df["Invested"].sum()
-                    # fetch individual stock data and compute weighted returns
-                    stock_curves = []
-                    for _, row in pf_df.iterrows():
-                        sdf = get_stock(row["Ticker"], 3)
-                        if sdf is not None and not sdf.empty:
-                            norm = (sdf["Close"] / sdf["Close"].iloc[0]) * 100
-                            stock_curves.append(norm * weights[row.name] if row.name < len(weights) else norm * 0)
-                    if stock_curves:
-                        pf_curve = sum(stock_curves)
-                        pf_curve = pf_curve / pf_curve.iloc[0] * 100
-                        bp = bench_pf["Close"].dropna()
-                        bp = (bp / bp.iloc[0] * 100)
-                        common = pf_curve.index.intersection(bp.index)
-                        if len(common) > 10:
-                            fig2 = go.Figure()
-                            fig2.add_trace(go.Scatter(x=common, y=pf_curve.loc[common].round(2),
-                                name="Your Portfolio", line=dict(color=C["accent"], width=2.5)))
-                            fig2.add_trace(go.Scatter(x=common, y=bp.loc[common].round(2),
-                                name="Nifty 50", line=dict(color="#9ca3af", width=2, dash="dot")))
-                            fig2.update_layout(
-                                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                                font_color="#c8c8d8", height=300,
-                                xaxis=dict(showgrid=False, color="#6b6b80"),
-                                yaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.05)",
-                                           color="#6b6b80", title="Start = 100"),
-                                legend=dict(bgcolor="rgba(0,0,0,0)", orientation="h", y=1.02),
-                                margin=dict(l=0,r=0,t=36,b=0), hovermode="x unified")
-                            st.plotly_chart(fig2, use_container_width=True)
-                        else:
-                            st.info("Not enough overlapping data for portfolio vs Nifty chart.")
-            except Exception:
-                st.info("Portfolio vs Nifty chart unavailable — try again after loading.")
