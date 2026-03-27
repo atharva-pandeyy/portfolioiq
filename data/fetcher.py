@@ -48,48 +48,23 @@ def get_index(yf_ticker, years=3):
 def get_nifty(years=3):
     return get_index("^NSEI", years)
 
-
 def get_stock_info(ticker):
     t = ticker.strip().upper()
     if not (t.endswith(".NS") or t.endswith(".BO")):
         t += ".NS"
     try:
-        tk = yf.Ticker(t)
-        # 🔥 Try BOTH sources
-        info = tk.info or {}
-        fast = getattr(tk, "fast_info", {}) or {}
-        # 🔥 Fallback handling
-        name = info.get("longName") or ticker
-        sector = info.get("sector")
-        industry = info.get("industry")
-        # If info is empty (common on Streamlit)
-        if not sector or not industry:
-            # Try secondary call (forces refresh)
-            try:
-                info = yf.Ticker(t).get_info() or info
-                sector = sector or info.get("sector")
-                industry = industry or info.get("industry")
-            except:
-                pass
+        info = yf.Ticker(t).info
         return {
-            "name": name,
-            "sector": sector if sector else "N/A",
-            "industry": industry if industry else "N/A",
-            "price": fast.get("last_price") or info.get("currentPrice"),
-            "52h": info.get("fiftyTwoWeekHigh"),
-            "52l": info.get("fiftyTwoWeekLow"),
-            "pe": info.get("trailingPE"),
+            "name":    info.get("longName", ticker),
+            "sector":  info.get("sector", "N/A"),
+            "industry":info.get("industry", "N/A"),
+            "price":   info.get("currentPrice"),
+            "52h":     info.get("fiftyTwoWeekHigh"),
+            "52l":     info.get("fiftyTwoWeekLow"),
+            "pe":      info.get("trailingPE"),
         }
-    except Exception:
-        return {
-            "name": ticker,
-            "sector": "N/A",
-            "industry": "N/A",
-            "price": None,
-            "52h": None,
-            "52l": None,
-            "pe": None,
-        }
+    except:
+        return {"name": ticker, "sector": "N/A", "industry": "N/A"}}
         
 def suggest_tickers(query):
     # fallback when user types something we don't recognise
