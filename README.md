@@ -1,89 +1,92 @@
 # PortfolioIQ 📊
-### Indian Stock & Mutual Fund Analytics Dashboard
 
-A publicly hosted financial analytics tool for Indian equity and mutual fund investors. Built with Python and Streamlit.
+**Indian Stock & Mutual Fund Analytics Dashboard**
 
-**Live Demo:** [Add your Streamlit Cloud URL here after deployment]
-
----
-
-## Features
-
-### Stock Analysis
-- Historical price performance vs Nifty 50 benchmark (indexed to 100)
-- Key risk-return metrics: CAGR, Sharpe Ratio, Max Drawdown, Annualised Volatility
-- Alpha and Beta calculation vs Nifty 50
-- Daily returns distribution histogram
-- **SMA Crossover Backtest** — test any short/long moving average strategy with configurable capital, view trade log and equity curve
-
-### Mutual Fund Analysis
-- Search any Indian mutual fund by name (powered by mfapi.in)
-- Historical NAV performance vs Nifty 50 benchmark
-- Same risk-return metric suite as stock analysis
-
-### My Portfolio
-- Upload your holdings as a CSV (ticker, shares, avg_buy_price)
-- Live P&L calculation using current market prices
-- Portfolio allocation pie chart
-- P&L breakdown by holding
+Live demo → [portfolioiq0709.streamlit.app](https://portfolioiq0709.streamlit.app)
 
 ---
 
-## Tech Stack
+## What it does
 
-| Layer | Tool |
+Most retail investors in India have no easy way to answer basic questions: *Did this stock actually beat the market? How much risk did I take for those returns? Would a simple strategy have worked better?*
+
+PortfolioIQ answers those questions. Enter any NSE stock or mutual fund, and get:
+
+- **Benchmark comparison** — indexed-to-100 chart showing your stock vs Nifty 50 (or the fund's actual benchmark index)
+- **Risk-return metrics** — CAGR, Sharpe Ratio, Max Drawdown, Volatility, Alpha, Beta — with plain-English explanations for each
+- **SMA Crossover Backtest** — test a moving average strategy on any stock, see the trade log and equity curve
+- **AI Analyst Insights** — powered by Claude, generates a concise analyst-style interpretation of the numbers
+- **Portfolio tracker** — upload a CSV of your holdings, get live P&L, allocation chart, and portfolio vs Nifty comparison
+- **Beginner / Pro mode** — simplified 3-metric view for newcomers, full suite for experienced investors
+
+---
+
+## Screenshots
+
+*(add your screenshots here)*
+
+---
+
+## Tech stack
+
+| | |
 |---|---|
-| UI / App framework | Streamlit |
+| App framework | Streamlit |
 | Stock data | yfinance (NSE/BSE via Yahoo Finance) |
-| Mutual fund data | [mfapi.in](https://www.mfapi.in/) — free Indian MF NAV API |
+| Mutual fund NAV | [mfapi.in](https://www.mfapi.in) — free Indian MF API |
 | Data processing | pandas, numpy |
 | Charts | Plotly |
+| AI commentary | Anthropic Claude API |
 | Deployment | Streamlit Cloud |
 
 ---
 
-## Run Locally
+## Run locally
 
 ```bash
-# 1. Clone the repo
-git clone https://github.com/atharva-pandeyy/portfolioiq.git
+git clone https://github.com/atharvapandeyy/portfolioiq.git
 cd portfolioiq
-
-# 2. Install dependencies
 pip install -r requirements.txt
-
-# 3. Run
-streamlit run app.py
+python -m streamlit run app.py
 ```
 
 ---
 
-## Portfolio CSV Format
-
-To use the "My Portfolio" tab, upload a CSV with this exact format:
+## Portfolio CSV format
 
 ```csv
 ticker,shares,avg_buy_price
 RELIANCE,10,2450.00
 HDFCBANK,5,1580.00
-INFY,8,1420.00
-TCS,3,3800.00
+IREDA,100,180.00
 ```
 
-Use NSE ticker symbols (same as what you'd search on NSE India website).
+Use NSE ticker symbols. The app fetches live prices and calculates P&L automatically.
+
+---
+
+## Project structure
+
+```
+portfolioiq/
+├── app.py                 # main dashboard UI
+├── data/
+│   └── fetcher.py         # data fetching: stocks, MF NAV, index data
+├── analytics/
+│   └── metrics.py         # CAGR, Sharpe, drawdown, SMA backtest engine
+└── requirements.txt
+```
 
 ---
 
 ## About
 
-Built by **Atharva Pandey** — a finance-oriented IT engineering student at Thakur College of Engineering & Technology, Mumbai.
+Built by **Atharva Pandey** — final year B.E. IT student at Thakur College of Engineering & Technology, Mumbai. I'm interested in the intersection of finance and technology, and built this while preparing for my CFA Level 1 and applying to finance masters programs.
 
-This project was built to demonstrate applied financial analytics using real Indian market data — combining quantitative finance concepts (Sharpe ratio, drawdown analysis, systematic strategy backtesting) with production-grade software engineering.
+The financial metrics in this project (Sharpe Ratio, Alpha/Beta, SMA backtesting) are concepts I've been studying independently alongside my engineering degree.
 
-**Connect:** [linkedin.com/in/atharva-pandey-600826322](https://linkedin.com/in/atharva-pandey-600826322)
+[LinkedIn](https://linkedin.com/in/atharva-pandey-600826322) · [GitHub](https://github.com/atharvapandeyy)
 
 ---
 
-## Disclaimer
-
-This tool is for educational and analytical purposes only. It does not constitute investment advice. Past performance of any backtested strategy does not guarantee future results.
+*Data sourced from Yahoo Finance and mfapi.in. Not investment advice.*
