@@ -64,7 +64,7 @@ def get_stock_info(ticker):
             "pe":      info.get("trailingPE"),
         }
     except:
-        return {"name": ticker, "sector": "N/A", "industry": "N/A"}}
+        return {"name": ticker, "sector": "N/A", "industry": "N/A"}
         
 def suggest_tickers(query):
     # fallback when user types something we don't recognise
