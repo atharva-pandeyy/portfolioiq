@@ -48,24 +48,44 @@ def get_index(yf_ticker, years=3):
 def get_nifty(years=3):
     return get_index("^NSEI", years)
 
+
 def get_stock_info(ticker):
     t = ticker.strip().upper()
     if not (t.endswith(".NS") or t.endswith(".BO")):
         t += ".NS"
+
+    result = {"name": ticker.replace(".NS","").replace(".BO",""),
+              "sector": "N/A", "industry": "N/A",
+              "price": None, "52h": None, "52l": None, "pe": None}
+
+    tk = yf.Ticker(t)
+
+    # fast_info is lightweight and reliable on Streamlit Cloud — no rate limiting
     try:
-        info = yf.Ticker(t).info
-        return {
-            "name":    info.get("longName", ticker),
-            "sector":  info.get("sector", "N/A"),
-            "industry":info.get("industry", "N/A"),
-            "price":   info.get("currentPrice"),
-            "52h":     info.get("fiftyTwoWeekHigh"),
-            "52l":     info.get("fiftyTwoWeekLow"),
-            "pe":      info.get("trailingPE"),
-        }
+        fi = tk.fast_info
+        result["price"] = round(fi.last_price, 2) if fi.last_price else None
+        result["52h"]   = round(fi.fifty_two_week_high, 2) if fi.fifty_two_week_high else None
+        result["52l"]   = round(fi.fifty_two_week_low,  2) if fi.fifty_two_week_low  else None
     except:
-        return {"name": ticker, "sector": "N/A", "industry": "N/A"}
-        
+        pass
+
+    # .info is heavier — try for name/sector/industry but don't block if it fails
+    try:
+        info = tk.info
+        # only use if we got a real response (empty/throttled responses have <5 keys)
+        if info and len(info) > 5:
+            result["name"]     = info.get("longName")  or result["name"]
+            result["sector"]   = info.get("sector")    or "N/A"
+            result["industry"] = info.get("industry")  or "N/A"
+            result["pe"]       = info.get("trailingPE")
+            if not result["price"]:
+                result["price"] = info.get("currentPrice")
+    except:
+        pass
+
+    return result
+
+
 def suggest_tickers(query):
     # fallback when user types something we don't recognise
     try:
