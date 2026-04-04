@@ -150,7 +150,6 @@ def compare_chart(df1, df2, n1, n2="Nifty 50"):
     p1, p2 = df1["Close"].dropna(), df2["Close"].dropna()
     p1, p2 = align(p1, p2)
     if len(p1) < 5 or len(p2) < 5:
-        # not enough overlap, just show asset alone
         a = (p1 / p1.iloc[0] * 100).round(2)
         fig = go.Figure(go.Scatter(x=a.index, y=a, line=dict(color=C["accent"], width=2.5)))
         fig.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
@@ -236,11 +235,6 @@ def bt_chart(res):
 
 
 def ai_insights(m, bench_m, info, name, period):
-    """
-    Generates plain-English interpretation of the metrics.
-    Uses Claude API so it reads like an analyst wrote it, not a template.
-    Falls back to rule-based text if API is unavailable.
-    """
     import requests as req
 
     cagr_pct  = round((m["cagr"] or 0) * 100, 1)
@@ -273,7 +267,6 @@ Keep each bullet under 20 words. No markdown headers, no intro sentence."""
         text = resp.json()["content"][0]["text"].strip()
         return text
     except:
-        # rule-based fallback if API fails
         lines = []
         if nifty_cagr is not None:
             diff = cagr_pct - nifty_cagr
@@ -328,7 +321,6 @@ if section == "Stock Analysis":
     st.markdown(f'# Stock Analysis &nbsp;<span class="badge {badge_cls}">{badge_txt} Mode</span>',
                 unsafe_allow_html=True)
 
-    # landing hook — only shows before any stock is loaded
     st.markdown("""
 <div style="background:rgba(124,106,255,0.07);border:1px solid rgba(124,106,255,0.2);
         border-radius:10px;padding:16px 20px;margin-bottom:20px">
@@ -343,7 +335,6 @@ What can you do here?
 </div>
 </div>""", unsafe_allow_html=True)
 
-    # quick-pick buttons that auto-load
     st.caption("Quick load:")
     qc = st.columns(5)
     for i, (name, tkr) in enumerate([
@@ -356,121 +347,115 @@ What can you do here?
                 st.rerun()
 
     q = st.text_input(
-    "Search by company name or NSE ticker",
-    placeholder="e.g. HDFC Bank, ONGC, Sona BLW, ZOMATO …",
-    key="s_q"
-)
+        "Search by company name or NSE ticker",
+        placeholder="e.g. HDFC Bank, ONGC, Sona BLW, ZOMATO …",
+        key="s_q"
+    )
 
-# ===== SMART TICKER RESOLUTION =====
-def smart_resolve_ticker(q):
-    q = q.strip().upper()
+    # ===== SMART TICKER RESOLUTION =====
+    def smart_resolve_ticker(q):
+        q = q.strip().upper()
 
-    # 1. Direct try
-    df = get_stock(q, 1)
-    if df is not None and not df.empty:
-        return q
+        # 1. Direct try
+        df = get_stock(q, 1)
+        if df is not None and not df.empty:
+            return q
 
-    # 2. Try NSE format
-    df = get_stock(q + ".NS", 1)
-    if df is not None and not df.empty:
-        return q
+        # 2. Try NSE format
+        df = get_stock(q + ".NS", 1)
+        if df is not None and not df.empty:
+            return q
 
-    # 3. Yahoo suggestions
-    sugg = suggest_tickers(q)
-    if sugg:
-        return sugg[0]["ticker"].replace(".NS", "").replace(".BO", "")
+        # 3. Yahoo suggestions
+        sugg = suggest_tickers(q)
+        if sugg:
+            return sugg[0]["ticker"].replace(".NS", "").replace(".BO", "")
 
-    return None
+        return None
 
+    # ===== PRIORITY ENGINE =====
+    sel_ticker = None
 
-# ===== PRIORITY ENGINE (FIXED) =====
-sel_ticker = None
+    # 1. Button click priority
+    if st.session_state.get("pending"):
+        sel_ticker = st.session_state["pending"]
 
-# 1. Button click priority
-if st.session_state.get("pending"):
-    sel_ticker = st.session_state["pending"]
-
-# 2. Search input
+    # 2. Search input
     elif q:
-    hits = find_ticker(q)
+        hits = find_ticker(q)
 
-    if hits:
-        lbls, tkrs = zip(*hits)
-        ch = st.selectbox("Select company", list(lbls), key="s_sel")
-        sel_ticker = tkrs[list(lbls).index(ch)]
-        st.caption(f"Ticker: **{sel_ticker}**")
-    else:
-        resolved = smart_resolve_ticker(q)
-        if resolved:
-            sel_ticker = resolved
-            st.caption(f"Auto-resolved to: **{sel_ticker}**")
+        if hits:
+            lbls, tkrs = zip(*hits)
+            ch = st.selectbox("Select company", list(lbls), key="s_sel")
+            sel_ticker = tkrs[list(lbls).index(ch)]
+            st.caption(f"Ticker: **{sel_ticker}**")
         else:
-            sel_ticker = q.strip().upper()
-            st.caption(f"Searching directly for: **{sel_ticker}**")
-
-
-nifty_on = st.checkbox("Compare vs Nifty 50", value=True, key="s_nifty")
-
-period_changed = (
-    st.session_state.s_df is not None
-    and st.session_state.s_period != period
-)
-
-auto = bool(st.session_state.get("pending"))
-
-# 🔥 FORCE pending usage
-if st.session_state.get("pending"):
-    sel_ticker = st.session_state["pending"]
-
-
-if (st.button("Analyse →", type="primary", use_container_width=True, key="s_btn")
-        and sel_ticker) or auto or period_changed:
-
-    # ❌ NO pop() anymore
-    t = st.session_state.get("pending") or sel_ticker or st.session_state.s_ticker
-
-    if t:
-        with st.spinner(f"Fetching {t}…"):
-            df = get_stock(t, period)
-            bench = get_nifty(period) if nifty_on else None
-            info  = get_stock_info(t)
-
-        if df is None or df.empty:
-            st.error(f"Couldn't find data for **{t}**. Check for spelling errors or the exact NSE ticker.")
-
-            with st.spinner("Looking for similar companies…"):
-                sugg = suggest_tickers(t)
-
-            if sugg:
-                st.warning("Did you mean one of these?")
-                cols = st.columns(min(len(sugg), 3))
-
-                for i, s in enumerate(sugg):
-                    with cols[i % 3]:
-                        if st.button(
-                            f"{s['name']}  ·  {s['ticker']}  ({s['exchange']})",
-                            key=f"sg_{i}"
-                        ):
-                            st.session_state["pending"] = (
-                                s["ticker"]
-                                .replace(".NS", "")
-                                .replace(".BO", "")
-                            )
-                            st.rerun()
+            resolved = smart_resolve_ticker(q)
+            if resolved:
+                sel_ticker = resolved
+                st.caption(f"Auto-resolved to: **{sel_ticker}**")
             else:
-                st.info("No matches found. Try a simpler name.")
+                sel_ticker = q.strip().upper()
+                st.caption(f"Searching directly for: **{sel_ticker}**")
 
-        else:
-            # ✅ SUCCESS → NOW CLEAR pending
-            st.session_state.update({
-                "s_df": df,
-                "s_bench": bench,
-                "s_bname": "Nifty 50",
-                "s_info": info,
-                "s_ticker": t,
-                "s_period": period,
-                "pending": None
-            })
+    nifty_on = st.checkbox("Compare vs Nifty 50", value=True, key="s_nifty")
+
+    period_changed = (
+        st.session_state.s_df is not None
+        and st.session_state.s_period != period
+    )
+
+    auto = bool(st.session_state.get("pending"))
+
+    if st.session_state.get("pending"):
+        sel_ticker = st.session_state["pending"]
+
+    if (st.button("Analyse →", type="primary", use_container_width=True, key="s_btn")
+            and sel_ticker) or auto or period_changed:
+
+        t = st.session_state.get("pending") or sel_ticker or st.session_state.s_ticker
+
+        if t:
+            with st.spinner(f"Fetching {t}…"):
+                df = get_stock(t, period)
+                bench = get_nifty(period) if nifty_on else None
+                info  = get_stock_info(t)
+
+            if df is None or df.empty:
+                st.error(f"Couldn't find data for **{t}**. Check for spelling errors or the exact NSE ticker.")
+
+                with st.spinner("Looking for similar companies…"):
+                    sugg = suggest_tickers(t)
+
+                if sugg:
+                    st.warning("Did you mean one of these?")
+                    cols = st.columns(min(len(sugg), 3))
+
+                    for i, s in enumerate(sugg):
+                        with cols[i % 3]:
+                            if st.button(
+                                f"{s['name']}  ·  {s['ticker']}  ({s['exchange']})",
+                                key=f"sg_{i}"
+                            ):
+                                st.session_state["pending"] = (
+                                    s["ticker"]
+                                    .replace(".NS", "")
+                                    .replace(".BO", "")
+                                )
+                                st.rerun()
+                else:
+                    st.info("No matches found. Try a simpler name.")
+
+            else:
+                st.session_state.update({
+                    "s_df": df,
+                    "s_bench": bench,
+                    "s_bname": "Nifty 50",
+                    "s_info": info,
+                    "s_ticker": t,
+                    "s_period": period,
+                    "pending": None
+                })
 
     # render
     if st.session_state.s_df is not None:
@@ -510,7 +495,6 @@ if (st.button("Analyse →", type="primary", use_container_width=True, key="s_bt
 **Chart** — Purple above grey = beat the market. Both start at 100 for fair comparison.
                 """)
 
-            # AI insights — works in both modes
             bench_m = get_all(bench) if bench is not None and not bench.empty else None
             with st.expander("🧠 AI Analyst Insights — what do these numbers actually mean?", expanded=True):
                 with st.spinner("Generating insights…"):
@@ -796,15 +780,12 @@ SONACOMS,20,520.00
                 margin=dict(l=0,r=0,t=20,b=0))
             st.plotly_chart(fig, use_container_width=True)
 
-            # portfolio vs nifty — compare total portfolio value growth vs benchmark
             st.markdown('<div class="sh">Portfolio vs Nifty 50</div>', unsafe_allow_html=True)
             st.caption("How your overall portfolio performed vs just putting it all in a Nifty 50 index fund.")
             try:
                 bench_pf = get_nifty(3)
                 if bench_pf is not None and not bench_pf.empty:
-                    # weighted average of individual stock returns as proxy
                     weights = pf_df["Invested"] / pf_df["Invested"].sum()
-                    # fetch individual stock data and compute weighted returns
                     stock_curves = []
                     for _, row in pf_df.iterrows():
                         sdf = get_stock(row["Ticker"], 3)
