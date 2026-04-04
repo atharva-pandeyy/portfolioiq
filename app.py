@@ -322,7 +322,6 @@ with st.sidebar:
 # ══════════════════════════════════════════════════════════════════════════════
 # STOCK ANALYSIS
 # ══════════════════════════════════════════════════════════════════════════════
-q = none
 if section == "Stock Analysis":
     badge_cls = "b-green" if not pro else "b-purple"
     badge_txt = "Beginner" if not pro else "Pro"
@@ -392,7 +391,7 @@ if st.session_state.get("pending"):
     sel_ticker = st.session_state["pending"]
 
 # 2. Search input
-elif q:
+    elif q:
     hits = find_ticker(q)
 
     if hits:
