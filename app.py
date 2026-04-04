@@ -322,6 +322,7 @@ with st.sidebar:
 # ══════════════════════════════════════════════════════════════════════════════
 # STOCK ANALYSIS
 # ══════════════════════════════════════════════════════════════════════════════
+q = none
 if section == "Stock Analysis":
     badge_cls = "b-green" if not pro else "b-purple"
     badge_txt = "Beginner" if not pro else "Pro"
